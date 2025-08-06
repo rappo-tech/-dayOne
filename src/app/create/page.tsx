@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useState } from "react"
 import Link from "next/link"
+import Navbar from "../components/navbar"
 
 export  default function  Create() {
   const[arr,setArr]=useState<string[]>([])
@@ -21,6 +22,8 @@ setStatus('internal error')
 
   
 return (<div>
+
+<Navbar></Navbar>
 <p className="bg-green-400">put your name here and see it  in capital letter   </p>
 
 <form onSubmit={saveName}>
