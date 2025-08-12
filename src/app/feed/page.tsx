@@ -18,6 +18,7 @@ export default function Feed() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const otherPeerIdRef = useRef<string | null>(null);
 
   const [isConnected, setIsConnected] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
@@ -41,10 +42,10 @@ export default function Feed() {
 
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
-      if (event.candidate && wsRef.current) {
+      if (event.candidate && wsRef.current && otherPeerIdRef.current) {
         wsRef.current.send(JSON.stringify({
           type: "ice-candidate",
-          to: "other-peer", // You'll need to track the other peer's ID
+          to: otherPeerIdRef.current,
           candidate: event.candidate
         }));
       }
@@ -60,10 +61,12 @@ export default function Feed() {
     return pc;
   }, []);
 
-  const createOffer=useCallback(async (targetPeerId: string)=> {
+  const createOffer = useCallback(async (targetPeerId: string) => {
     if (!pcRef.current) {
       pcRef.current = createPeerConnection();
     }
+
+    otherPeerIdRef.current = targetPeerId;
 
     try {
       const offer = await pcRef.current.createOffer();
@@ -77,12 +80,14 @@ export default function Feed() {
     } catch (error) {
       console.error("Error creating offer:", error);
     }
-  },[createPeerConnection])
+  }, [createPeerConnection]);
 
-  const handleOffer=useCallback(async (fromPeerId: string, sdp: RTCSessionDescriptionInit) => {
+  const handleOffer = useCallback(async (fromPeerId: string, sdp: RTCSessionDescriptionInit) => {
     if (!pcRef.current) {
       pcRef.current = createPeerConnection();
     }
+
+    otherPeerIdRef.current = fromPeerId;
 
     try {
       await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
@@ -97,7 +102,7 @@ export default function Feed() {
     } catch (error) {
       console.error("Error handling offer:", error);
     }
-  },[createPeerConnection])
+  }, [createPeerConnection]);
 
   const handleWebSocketMessage = useCallback(async (event: MessageEvent) => {
     const message: SignalMessage = JSON.parse(event.data);
@@ -148,8 +153,7 @@ export default function Feed() {
       default:
         console.log("Unknown message type:", message.type);
     }
-  }, [createOffer,handleOffer]);
-
+  }, [createOffer, handleOffer]);
 
  
   const handleAnswer = async (sdp: RTCSessionDescriptionInit) => {
@@ -251,7 +255,7 @@ export default function Feed() {
 
   return (
     <div className="flex flex-col items-center gap-4 p-6">
-      <h1 className="text-2xl font-bold">WebRTC Video Call</h1>
+      <h1 className="text-2xl font-bold bg-amber-600">WebRTC Video Call</h1>
       
       <div className="flex gap-4">
         <div className="flex flex-col items-center gap-2">
