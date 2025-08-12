@@ -39,7 +39,7 @@ return (<div>
 </form>
 
 <Link href={'/feed'}>
-<button className="bg-teal-600" >go to feed </button>
+<button className="bg-yellow-300 hover:bg-amber-400" >go to join  ws  </button>
 </Link>
 
 
