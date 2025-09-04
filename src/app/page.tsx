@@ -4,6 +4,7 @@ import Link from "next/link"
 import Navbar from "./components/navbar"
 import Button from "./components/button"
 import Flexbox from "./components/flexbox"
+import WriteText2 from "./writeText/page"
 
 export  default function  Home() {
 
@@ -22,6 +23,8 @@ return (<div>
 </Link>
 
 <Flexbox></Flexbox>
+
+<WriteText2></WriteText2>
 
 
 </div>)
