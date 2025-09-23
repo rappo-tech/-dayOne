@@ -53,5 +53,13 @@ return <div key={index}>
 })
   }</div>
 
+<Link href={'/terms'}>
+<button className="bg-blue-600" >terms of condition </button>
+</Link>
+
+<Link href={'/privacy'}>
+<button className="bg-purple-600" >privacy</button>
+</Link>
+
 </div>)
 }

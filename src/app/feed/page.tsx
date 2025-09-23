@@ -1,4 +1,5 @@
 "use client";
+//30 total new 
 import { useRef, useState, useCallback } from "react";
 
 interface SignalMessage {
@@ -19,14 +20,12 @@ export default function Feed() {
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const otherPeerIdRef = useRef<string | null>(null);
-
   const [isConnected, setIsConnected] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-
-  // Generate unique client ID
   const clientId = useRef(Math.random().toString(36).substring(7));
   const roomId = "test-room"; // You can make this dynamic
 
+  //(+5)
   const createPeerConnection = useCallback(() => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -61,6 +60,7 @@ export default function Feed() {
     return pc;
   }, []);
 
+//2.bob created the Offer and internally createPeerConnection(+4) 
   const createOffer = useCallback(async (targetPeerId: string) => {
     if (!pcRef.current) {
       pcRef.current = createPeerConnection();
@@ -82,6 +82,7 @@ export default function Feed() {
     }
   }, [createPeerConnection]);
 
+//3.alice handle  offer  and internally  createPeerConnection(+4)
   const handleOffer = useCallback(async (fromPeerId: string, sdp: RTCSessionDescriptionInit) => {
     if (!pcRef.current) {
       pcRef.current = createPeerConnection();
@@ -104,6 +105,7 @@ export default function Feed() {
     }
   }, [createPeerConnection]);
 
+//(+3)
   const handleWebSocketMessage = useCallback(async (event: MessageEvent) => {
     const message: SignalMessage = JSON.parse(event.data);
     console.log("Received message:", message);
@@ -155,7 +157,8 @@ export default function Feed() {
     }
   }, [createOffer, handleOffer]);
 
- 
+//4.after alice handle offer & internally createPeerConnection 
+// bob  handle answer(+3)
   const handleAnswer = async (sdp: RTCSessionDescriptionInit) => {
     if (pcRef.current) {
       try {
@@ -165,7 +168,7 @@ export default function Feed() {
       }
     }
   };
-
+//5.bob handle iceCandidate(+3)
   const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
     if (pcRef.current) {
       try {
@@ -175,7 +178,7 @@ export default function Feed() {
       }
     }
   };
-
+//1.bob call and then alice call (+7) 
   const startCall = async () => {
     try {
       // 1. Get local media stream
@@ -221,7 +224,7 @@ export default function Feed() {
       console.error("Error starting call:", error);
     }
   };
-
+//6.bob end call(+3)
   const endCall = () => {
     // Close peer connection
     if (pcRef.current) {
@@ -253,13 +256,17 @@ export default function Feed() {
     setIsInCall(false);
   };
 
+
+
+
+
   return (
     <div className="flex flex-col items-center gap-4 p-6">
       <h1 className="text-2xl font-bold bg-amber-600">WebRTC Video Call</h1>
       
       <div className="flex gap-4">
         <div className="flex flex-col items-center gap-2">
-          <h3 className="text-lg">Local Video</h3>
+          <h3 className="text-lg">Local Video:-Bob</h3>
           <video 
             ref={localVideoRef} 
             autoPlay 
@@ -270,7 +277,7 @@ export default function Feed() {
         </div>
         
         <div className="flex flex-col items-center gap-2">
-          <h3 className="text-lg">Remote Video</h3>
+          <h3 className="text-lg">Remote Video:-alice </h3>
           <video 
             ref={remoteVideoRef} 
             autoPlay 
@@ -306,3 +313,18 @@ export default function Feed() {
     </div>
   );
 }
+/*
+1.alice start()====send alice id sedn  to websocketserver  in wss save in room:{ }  and send msg that no one here  to  handleWebsocketMsg.tsx
+2.alice handlewebsocketMsg.tsx 
+3.bob start()====send bob id sedn  to websocketserver  in wss save in room:{ }  and send msg that alice here  to  handleWebsocketMsg.tsx
+4.bob handlewebsocketMsg.tsx  sees the alice  and  bob handlewebsocketMsg triggger the createOffer  right ??
+5.bob createOffer() internally createRtcPeerConnection()====>it goes bob sedn his sdp and bob ip goes to wsserver.ts then websocketserver.ts  sedn it to alice socket
+6.alice handlewebsocketmsg()   sees the offer and sess the  bob sdp and ice  candidate of bob  and triggger the handleoffer.ts which intarnally call createRtcpeerconnection() and sedn alicce sdp and ip to websocketserver() to bob socket
+7.bob handlewebspcketmessage()    sees the alice sdp and ip  then call the handleanswer()  basically confirmation getting alice sdp and ip address to the websocketserver
+8.alice  handlewebsocketessage() sees  this  ....
+so in whole process  handlewebsocketmessgae()  is the guy who  handle all the funtion which we have written right except  start() and end () right so 
+createRtcpeerconnection()  is controlled by 
+handleOffer()   and createOffer() 
+and handleOffer(),createOffer(),handleAnswer(),handleIceCandidate()==>all 4 controllled by handlewebsocketmessage()
+and in a in-DIRECT way start()  and end()  controlled the handlewebsocketMessage()  right ??
+*/
