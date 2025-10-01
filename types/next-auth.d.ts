@@ -1,33 +1,21 @@
-import { DefaultSession, DefaultUser } from "next-auth";
+import { DefaultSession } from "next-auth";
+import { JWT as DefaultJWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      email: string;
-      name: string;
-      customToken?: string; // ✅ our custom JWT token
+      customToken?: string;
     } & DefaultSession["user"];
   }
 
-  interface User extends DefaultUser {
-    id: string;
-    email: string;
-    name: string;
-    customToken?: string; // ✅ optional custom token
-  }
-
-  interface JWT {
-    sub?: string;
-    email?: string;
-    name?: string;
-    customToken?: string; // ✅ store token in JWT too
+  interface User {
+    customToken?: string;
   }
 }
 
-// ✅ JWT Error types for better type safety
-export interface JWTError extends Error {
-  code?: string;
-  claim?: string;
-  reason?: string;
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    customToken?: string;
+  }
 }
