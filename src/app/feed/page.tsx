@@ -2,26 +2,26 @@
 //30 total new 
 import { useRef, useState, useCallback } from "react";
 
-interface SignalMessage {
-  type: string;
-  roomId?: string;
-  clientId?: string;
-  to?: string;
-  from?: string;
-  sdp?: RTCSessionDescriptionInit;
-  candidate?: RTCIceCandidateInit;
-  peers?: string[];
+interface SignalMessage {//only used  in handlewebsocketmsg()
+  type: string;//handlewebsocketMsg()
+  roomId?: string;//createOffer(),handleAnser(),send to websokcte
+  clientId?: string;//sedn to websocket
+  to?: string;//createOffer() 
+  from?: string;//handleOffer()
+  sdp?: RTCSessionDescriptionInit;//while  send createOffer()
+  candidate?: RTCIceCandidateInit;//handleIceCandidate()
+  peers?: string[];//exisiitng users, before createOffer()
 }
 
 export default function Feed() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);//createOffer(),handleOffer(),handleAnswer(),handleIcecandidate()
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const otherPeerIdRef = useRef<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);//for websocket
+  const [isInCall, setIsInCall] = useState(false)//for both vdo on or not 
   const clientId = useRef(Math.random().toString(36).substring(7));
   const roomId = "test-room"; // You can make this dynamic
 
@@ -29,9 +29,9 @@ export default function Feed() {
   const createPeerConnection = useCallback(() => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-    });
+    });//get the public ip of your broswer 
 
-    // Handle remote stream
+//recive  remote / other user2 video 
     pc.ontrack = (event) => {
       console.log("Received remote stream");
       if (remoteVideoRef.current) {
@@ -39,10 +39,10 @@ export default function Feed() {
       }
     };
 
-    // Handle ICE candidates
+//send your  user1`s  public ip to websocket then to  user2  browser when you  get your ip address 
     pc.onicecandidate = (event) => {
       if (event.candidate && wsRef.current && otherPeerIdRef.current) {
-        wsRef.current.send(JSON.stringify({
+        wsRef.current.send(JSON.stringify({//send ip address
           type: "ice-candidate",
           to: otherPeerIdRef.current,
           candidate: event.candidate
@@ -50,13 +50,12 @@ export default function Feed() {
       }
     };
 
-    // Add local stream if available
+//send your own user1 video 
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current!);
       });
     }
-
     return pc;
   }, []);
 
@@ -72,7 +71,7 @@ export default function Feed() {
       const offer = await pcRef.current.createOffer();
       await pcRef.current.setLocalDescription(offer);
 
-      wsRef.current?.send(JSON.stringify({
+      wsRef.current?.send(JSON.stringify({//sending sdp 
         type: "offer",
         to: targetPeerId,
         sdp: offer
@@ -95,7 +94,7 @@ export default function Feed() {
       const answer = await pcRef.current.createAnswer();
       await pcRef.current.setLocalDescription(answer);
 
-      wsRef.current?.send(JSON.stringify({
+      wsRef.current?.send(JSON.stringify({//sending sdp 
         type: "answer",
         to: fromPeerId,
         sdp: answer
@@ -105,13 +104,15 @@ export default function Feed() {
     }
   }, [createPeerConnection]);
 
-//(+3)
+//(+3)websocketserver sedning text msgs to  browser ( browser<<<=====websocketServer)
   const handleWebSocketMessage = useCallback(async (event: MessageEvent) => {
     const message: SignalMessage = JSON.parse(event.data);
     console.log("Received message:", message);
 
     switch (message.type) {
-      case "existing-peers":
+
+  
+      case "existing-peers"://1.after bob start(),2.bob createOffer(aliceUserId),rtcPeerConnection().createOffer()
         console.log("Existing peers:", message.peers);
         // If there are existing peers, create offers to them
         if (message.peers && message.peers.length > 0) {
@@ -121,30 +122,30 @@ export default function Feed() {
         }
         break;
 
-      case "new-peer":
+      case "new-peer": //alice got it, when bob does strat()
         console.log("New peer joined:", message.clientId);
         // Don't create offer immediately, let the new peer create offers to existing peers
         break;
 
-      case "offer":
+      case "offer": //3.after bob createOffer(), 4.alice handleOffer(),rtcPeerconnection().handleOffer()
         if (message.from && message.sdp) {
           await handleOffer(message.from, message.sdp);
         }
         break;
 
-      case "answer":
+      case "answer"://after alice handleOffer(),5.bob handleAnswer() 
         if (message.from && message.sdp) {
           await handleAnswer(message.sdp);
         }
         break;
 
-      case "ice-candidate":
+      case "ice-candidate"://4.createpeerConnection()
         if (message.candidate) {
           await handleIceCandidate(message.candidate);
         }
         break;
 
-      case "peer-left":
+      case "peer-left"://end()
         console.log("Peer left:", message.clientId);
         // Handle peer disconnection
         if (remoteVideoRef.current) {
@@ -168,7 +169,7 @@ export default function Feed() {
       }
     }
   };
-//5.bob handle iceCandidate(+3)
+//5.reciving other guy remote ip 
   const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
     if (pcRef.current) {
       try {
@@ -313,6 +314,7 @@ export default function Feed() {
     </div>
   );
 }
+
 /*
 1.alice start()====send alice id sedn  to websocketserver  in wss save in room:{ }  and send msg that no one here  to  handleWebsocketMsg.tsx
 2.alice handlewebsocketMsg.tsx 
@@ -327,4 +329,15 @@ createRtcpeerconnection()  is controlled by
 handleOffer()   and createOffer() 
 and handleOffer(),createOffer(),handleAnswer(),handleIceCandidate()==>all 4 controllled by handlewebsocketmessage()
 and in a in-DIRECT way start()  and end()  controlled the handlewebsocketMessage()  right ??
+-------------------------------------------------------------------------------------------
+1.handleWebsocketMsg(), 
+2.createPeerConnection(), 
+3.handleIceCandidate(),
+new rtcpeercocnection(iceserver) find out user 1 own   ip address 
+pc.onIceCandidate() =send user 1  local  ip address ( local user1 ===>>> remote user 2) 
+pc.addTracks()==sedn user1 own  local  vdo stream ( local user1 ===>>> remote user 2) 
+pcRef.current.addIceCandidate()===receive user2 other guy  remote  ip address ( local user 1 <<<=== remote user2 )
+pc.onTrack()===recive user2 user2 other guy remote vdo stream  ( local user 1 <<<=== remote user 2 )
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 */
