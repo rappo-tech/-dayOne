@@ -39,8 +39,15 @@ return (<div>
 </form>
 
 <Link href={'/feed'}>
-<button className="bg-yellow-300 hover:bg-amber-400" >go to join  ws  </button>
+<button className="bg-yellow-400 hover:bg-amber-500" >go to join  ws  </button>
 </Link>
+
+
+<Link href={'/vdoCall'}>
+<button className="bg-orange-600 hover:bg-amber-700" >vdo call app  </button>
+</Link>
+
+
 
 
 <p>status:{status}</p>
