@@ -19,7 +19,7 @@ export default function Feed() {
   const pcRef = useRef<RTCPeerConnection | null>(null);//createOffer(),handleOffer(),handleAnswer(),handleIcecandidate()
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const otherPeerIdRef = useRef<string | null>(null);
+  const otherPeerIdRef = useRef<string | null>(null);//
   const [isConnected, setIsConnected] = useState(false);//for websocket
   const [isInCall, setIsInCall] = useState(false)//for both vdo on or not 
   const clientId = useRef(Math.random().toString(36).substring(7));

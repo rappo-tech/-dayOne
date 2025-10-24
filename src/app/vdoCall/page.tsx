@@ -224,7 +224,7 @@ ref={remoteVdo}
 className="w-48 h-36 border-4"
 autoPlay
 playsInline
-muted
+muted={false}
 controls
 ></video>
 
@@ -235,7 +235,6 @@ ref={localVdo}
 className="w-48 h-36 border-4"
 autoPlay
 playsInline
-muted
 controls
 ></video>
 
